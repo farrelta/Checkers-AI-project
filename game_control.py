@@ -4,10 +4,16 @@ from board_gui import BoardGUI
 from held_piece import HeldPiece
 from ai import AI
 from utils import get_surface_mouse_offset, get_piece_position
+import random
 
 class GameControl:
     def __init__(self, player_color, is_computer_opponent, difficulty=None):
-        self.turn = player_color
+        # Determine AI color
+        ai_color = "B" if player_color == "W" else "W"
+        self.ai_control = AI(ai_color, difficulty) if is_computer_opponent else None
+
+        # Turn starts with white by default
+        self.turn = "W"
         self.winner = None
         self.board = None
         self.board_draw = None
@@ -16,6 +22,8 @@ class GameControl:
 
         if is_computer_opponent:
             ai_color = "B" if player_color == "W" else "W"
+            starting_turn = "W"  # White always starts in Checkers
+            self.turn = starting_turn
             self.ai_control = AI(ai_color, difficulty)  # Pass difficulty to AI
 
         self.setup()
@@ -117,14 +125,17 @@ class GameControl:
 
     def move_ai(self):
         # Gets best move from an AI instance and moves it.
-        if self.turn == "W":
+        if self.turn != self.ai_control.color:
             return
 
         optimal_move = self.ai_control.get_move(self.board)
-        # NEW: If no move possible, AI loses
+
+        # If no move possible, AI loses
         if optimal_move is None:
-            self.winner = "W" if self.turn == "B" else "B"
+            self.winner = "B" if self.turn == "W" else "W"
             return
+        
+
         index_moved = -1
         piece_moved = None
 
@@ -145,3 +156,29 @@ class GameControl:
 
         if len(jump_moves) == 0 or piece_moved.get_has_eaten() == False:
             self.turn = "B" if self.turn == "W" else "W"
+
+    def move_ai_first_random(self):
+        """Make a random move for AI (used for first move)"""
+        if not self.ai_control:
+            return
+
+        ai_color = self.ai_control.color
+        player_pieces = [p for p in self.board.get_pieces() if p.get_color() == ai_color]
+        possible_moves = []
+
+        for idx, piece in enumerate(self.board.get_pieces()):
+            if piece.get_color() != ai_color:
+                continue
+            for move in piece.get_moves(self.board):
+                possible_moves.append({"piece": idx, "move": move})
+
+        if not possible_moves:
+            # AI cannot move → human wins
+            self.winner = "B" if ai_color == "W" else "W"
+            return
+
+        move = random.choice(possible_moves)
+        self.board.move_piece(move["piece"], int(move["move"]["position"]))
+        self.board_draw.set_pieces(self.board_draw.get_piece_properties(self.board))
+        self.winner = self.board.get_winner()
+        self.turn = "B" if ai_color == "W" else "W"

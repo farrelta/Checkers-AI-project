@@ -32,10 +32,11 @@ def setup_game():
         return "pvp", "W", None
 
 def main(gamemode, player_color, difficulty):
-    # Main setup
+    import pygame as pg
+
+    # --- Main setup ---
     pg.init()
     FPS = 30
-
     DISPLAYSURF = pg.display.set_mode((700, 500))
     pg.display.set_caption('Checkers in Python')
     fps_clock = pg.time.Clock()
@@ -46,45 +47,43 @@ def main(gamemode, player_color, difficulty):
     turn_rect = (509, 26)
     winner_rect = (509, 152)
 
+    # --- Handle AI first move immediately if AI goes first ---
+    if gamemode == "pvai" and game_control.turn != player_color:
+        # If AI is white and first move
+        game_control.move_ai_first_random()
+
+    # --- Main loop ---
     while True:
         # GUI
         DISPLAYSURF.fill((0, 0, 0))
         game_control.draw_screen(DISPLAYSURF)
 
+        # Display turn
         turn_display_text = "White's turn" if game_control.get_turn() == "W" else "Black's turn"
         DISPLAYSURF.blit(main_font.render(turn_display_text, True, (255, 255, 255)), turn_rect)
 
+        # Display winner if exists
         if game_control.get_winner() is not None:
-            winner_text = f"{'White' if player_color == 'W' else 'Black'} wins!" if game_control.get_winner() == player_color else f"{'Black' if player_color == 'W' else 'White'} wins!"
+            winner_text = f"{'White' if game_control.get_winner() == 'W' else 'Black'} wins!"
             DISPLAYSURF.blit(main_font.render(winner_text, True, (255, 255, 255)), winner_rect)
 
-        # Event handling
-        for event in pg.event.get():
-            if event.type == QUIT:
-                pg.quit()
-                return
-            
-            if event.type == MOUSEBUTTONDOWN:
-                game_control.hold_piece(event.pos)
-            
-            if event.type == MOUSEBUTTONUP:
-                game_control.release_piece()
-
-                if game_control.get_turn() != player_color and gamemode == "pvai":
-                    pg.time.set_timer(USEREVENT, 400)
-            
-            if event.type == USEREVENT:
-                # AI movement
-                if game_control.get_winner() is not None:
-                    continue
-
-                game_control.move_ai()
-
-                if game_control.get_turn() == player_color:
-                    pg.time.set_timer(USEREVENT, 0)
-        
         pg.display.update()
         fps_clock.tick(FPS)
+
+        # --- Handle AI moves ---
+        if gamemode == "pvai" and game_control.get_turn() != player_color and game_control.get_winner() is None:
+            pg.time.delay(50)  # allow GUI update before heavy AI
+            game_control.move_ai()
+
+        # --- Handle user input ---
+        for event in pg.event.get():
+            if event.type == pg.QUIT:
+                pg.quit()
+                return
+            if event.type == pg.MOUSEBUTTONDOWN:
+                game_control.hold_piece(event.pos)
+            if event.type == pg.MOUSEBUTTONUP:
+                game_control.release_piece()
 
 if __name__ == '__main__':
     gamemode, player_color, difficulty = setup_game()
