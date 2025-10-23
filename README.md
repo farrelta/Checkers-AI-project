@@ -9,3 +9,6 @@ From [Wikipedia](https://en.wikipedia.org/wiki/Draughts):
 1. Clone the project with `git clone https://github.com/`.
 2. [Activate](https://virtualenv.pypa.io/en/latest/user_guide.html#activators) the virtual environment if you don't have pygame installed on your machine.
 3. Run `python checkers.py`
+
+## Credits
+https://github.com/lucaskenji/python-checkers.git
