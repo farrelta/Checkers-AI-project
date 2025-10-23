@@ -93,6 +93,14 @@ class GameControl:
 
         self.board_draw.hide_piece(piece_clicked["index"])
         self.set_held_piece(piece_clicked["index"], board_pieces[piece_clicked["index"]], mouse_pos)
+
+    def has_legal_moves(self, color):
+            for piece in self.board.get_pieces():
+                if piece.get_color() != color:
+                    continue
+                if piece.get_moves(self.board):  # If any piece has moves
+                    return True
+            return False
     
     def release_piece(self):
         if self.held_piece is None:
@@ -111,8 +119,16 @@ class GameControl:
             # Check if player can eat another piece, granting an extra turn.
             jump_moves = list(filter(lambda move: move["eats_piece"] == True, piece_moved.get_moves(self.board)))
             
-            if len(jump_moves) == 0 or piece_moved.get_has_eaten() == False:
-                self.turn = "B" if self.turn == "W" else "W"
+            # Determine next turn
+            next_turn = "B" if self.turn == "W" else "W"
+
+            # Check if next player has legal moves
+            if not self.has_legal_moves(next_turn):
+                # Next player cannot move → current player wins
+                self.winner = self.turn
+            else:
+                # Switch turn normally
+                self.turn = next_turn
 
         self.held_piece = None
         self.board_draw.set_move_marks([])
