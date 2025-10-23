@@ -110,19 +110,44 @@ class GameControl:
         moved_index = self.board_draw.show_piece()
         piece_moved = self.board.get_piece_by_index(moved_index)
 
-        # Only moves the piece if dropped in a proper move mark        
+        # --- Only allow release if it's a valid move mark ---
+        # Prevent disappearing piece on invalid release
+        if position_released is None:
+            # Not dropped on a valid move mark → cancel move and reset visuals
+            self.board_draw.set_pieces(self.board_draw.get_piece_properties(self.board))
+            self.board_draw.set_move_marks([])
+            self.held_piece = None
+            return
+
+        # Only moves the piece if dropped in a proper move mark
         if position_released is not None:
+            # perform the move
             self.board.move_piece(moved_index, self.board_draw.get_position_by_rect(position_released))
             self.board_draw.set_pieces(self.board_draw.get_piece_properties(self.board))
             self.winner = self.board.get_winner()
 
-            # Check if player can eat another piece, granting an extra turn.
-            jump_moves = list(filter(lambda move: move["eats_piece"] == True, piece_moved.get_moves(self.board)))
-            
-            # Determine next turn
+            # --- Check for possible extra jumps (double-jump rule) ---
+            # get jump moves for the moved piece (these have move["eats_piece"] == True)
+            jump_moves = [move for move in piece_moved.get_moves(self.board) if move["eats_piece"]]
+
+            if piece_moved.get_has_eaten() and jump_moves:
+                # Still more jumps available → same piece must continue.
+                # Convert each move["position"] (string) into (row, column) tuples expected by set_move_marks
+                move_marks = []
+                for move in jump_moves:
+                    pos_int = int(move["position"])
+                    row = self.board.get_row_number(pos_int)
+                    col = self.board.get_col_number(pos_int)
+                    move_marks.append((row, col))
+
+                self.held_piece = None
+                self.board_draw.set_move_marks(move_marks)
+                return  # keep the same turn, don't switch yet
+
+            # --- Otherwise, determine next turn ---
             next_turn = "B" if self.turn == "W" else "W"
 
-            # Check if next player has legal moves
+            # --- Check if next player has legal moves ---
             if not self.has_legal_moves(next_turn):
                 # Next player cannot move → current player wins
                 self.winner = self.turn
@@ -130,8 +155,10 @@ class GameControl:
                 # Switch turn normally
                 self.turn = next_turn
 
+        # --- Clear held piece and move marks ---
         self.held_piece = None
         self.board_draw.set_move_marks([])
+
 
     def set_held_piece(self, index, piece, mouse_pos):
         # Creates a HeldPiece object to follow the mouse

@@ -20,9 +20,9 @@ def setup_game():
         player_color = "W" if color_choice == "1" else "B"
         
         print("Choose AI difficulty:")
-        print("1. Easy (faster, weaker AI)")
-        print("2. Medium (balanced)")
-        print("3. Hard (slower, stronger AI)")
+        print("1. Easy")
+        print("2. Medium")
+        print("3. Hard")
         diff_choice = input("Choose difficulty (1, 2, or 3): ").strip()
         difficulty = {"1": "easy", "2": "medium", "3": "hard"}.get(diff_choice, "medium")
         
