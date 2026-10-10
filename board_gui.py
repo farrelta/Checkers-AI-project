@@ -92,8 +92,7 @@ class BoardGUI:
 
     def set_move_marks(self, position_list):
         # Sets a list of move marks based on a list of (row, column) tuples.
-        if len(position_list) == 0:
-            self.move_marks = []
+        self.move_marks = []
 
         for position in position_list:
             row = position[0]

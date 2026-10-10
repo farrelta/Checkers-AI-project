@@ -125,9 +125,33 @@ class Board:
 
         # Actually move
         piece_to_move.set_position(new_position)
+
+    def get_legal_moves(self, color, forced_piece_position=None):
+        """Return legal moves for a side, enforcing captures across the board.
+
+        Each result is a dictionary with the piece's current list index and the
+        move dictionary returned by ``Piece.get_moves``. When a capture chain is
+        active, only that piece's captures are considered.
+        """
+        moves = []
+        for index, piece in enumerate(self.pieces):
+            if piece.get_color() != color:
+                continue
+            if forced_piece_position is not None and piece.get_position() != str(forced_piece_position):
+                continue
+            for move in piece.get_moves(self):
+                moves.append({"piece": index, "move": move})
+
+        if forced_piece_position is not None:
+            return [item for item in moves if item["move"]["eats_piece"]]
+
+        captures = [item for item in moves if item["move"]["eats_piece"]]
+        return captures if captures else moves
     
     def get_winner(self):
         # Returns the winning color or None if no player has won yet
+        if not self.pieces:
+            return None
         current_color = self.pieces[0].get_color()
 
         for piece in self.pieces:

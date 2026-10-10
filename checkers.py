@@ -1,7 +1,5 @@
 import pygame as pg
 from sys import exit
-from pygame.locals import *
-from board_gui import BoardGUI
 from game_control import GameControl
 
 def setup_game():
@@ -50,7 +48,7 @@ def main(gamemode, player_color, difficulty):
     # --- Handle AI first move immediately if AI goes first ---
     if gamemode == "pvai" and game_control.turn != player_color:
         # If AI is white and first move
-        game_control.move_ai_first_random()
+        game_control.move_ai()
 
     # --- Main loop ---
     while True:
